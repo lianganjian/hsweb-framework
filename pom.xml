@@ -34,6 +34,7 @@
         <module>hsweb-commons</module>
         <module>hsweb-logging</module>
         <module>hsweb-tests</module>
+        <module>hsweb-concurrent</module>
     </modules>
 
     <packaging>pom</packaging>
@@ -96,7 +97,7 @@
         <swagger.version>2.7.0</swagger.version>
 
         <reactor.version>Dysprosium-RELEASE</reactor.version>
-        <r2dbc.version>Arabba-RC2</r2dbc.version>
+        <r2dbc.version>Arabba-RELEASE</r2dbc.version>
     </properties>
 
     <profiles>
@@ -274,6 +275,11 @@
 <!--            <scope>provided</scope>-->
         </dependency>
         <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-configuration-processor</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
             <groupId>org.codehaus.groovy</groupId>
             <artifactId>groovy-all</artifactId>
             <version>2.4.15</version>
@@ -287,12 +293,6 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-all</artifactId>
-            <version>1.10.19</version>
             <scope>test</scope>
         </dependency>
         <dependency>

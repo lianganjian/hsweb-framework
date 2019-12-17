@@ -3,8 +3,10 @@ package org.hswebframework.web.authorization.token;
 import org.hswebframework.web.authorization.Authentication;
 import org.hswebframework.web.authorization.ReactiveAuthenticationManager;
 import org.hswebframework.web.authorization.ReactiveAuthenticationSupplier;
+import org.hswebframework.web.authorization.exception.UnAuthorizedException;
 import org.hswebframework.web.context.ContextKey;
 import org.hswebframework.web.context.ContextUtils;
+import org.hswebframework.web.logger.ReactiveLogger;
 import org.springframework.beans.factory.annotation.Autowired;
 import reactor.core.publisher.Mono;
 
@@ -25,7 +27,7 @@ public class UserTokenReactiveAuthenticationSupplier implements ReactiveAuthenti
 
     public UserTokenReactiveAuthenticationSupplier(UserTokenManager userTokenManager, ReactiveAuthenticationManager defaultAuthenticationManager) {
         this.defaultAuthenticationManager = defaultAuthenticationManager;
-        this.userTokenManager=userTokenManager;
+        this.userTokenManager = userTokenManager;
     }
 
     @Autowired(required = false)
@@ -68,10 +70,17 @@ public class UserTokenReactiveAuthenticationSupplier implements ReactiveAuthenti
         return ContextUtils.reactiveContext()
                 .flatMap(context ->
                         context.get(ContextKey.of(ParsedToken.class))
-                                .map(t -> userTokenManager.getByToken(t.getToken()))
+                                .map(t -> userTokenManager
+                                        .getByToken(t.getToken())
+                                        .filter(UserToken::validate))
                                 .map(tokenMono -> tokenMono
+                                        .doOnNext(token -> userTokenManager.touch(token.getToken()))
                                         .flatMap(token -> get(thirdPartAuthenticationManager.get(token.getType()), token.getUserId())))
-                                .orElseGet(Mono::empty));
+                                .orElseGet(Mono::empty))
+                .flatMap(auth -> ReactiveLogger.mdc("userId", auth.getUser().getId())
+                        .then(ReactiveLogger.mdc("username", auth.getUser().getName()))
+                        .thenReturn(auth))
+                ;
 
     }
 }

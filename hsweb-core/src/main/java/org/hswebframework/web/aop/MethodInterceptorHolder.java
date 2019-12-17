@@ -18,22 +18,29 @@
 
 package org.hswebframework.web.aop;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import org.aopalliance.intercept.MethodInvocation;
 import org.hswebframework.web.utils.AnnotationUtils;
+import org.reactivestreams.Publisher;
 import org.springframework.core.LocalVariableTableParameterNameDiscoverer;
 import org.springframework.core.ParameterNameDiscoverer;
 import org.springframework.util.DigestUtils;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Function;
 
 /**
  * @author zhouhao
  */
+@AllArgsConstructor
+@Getter
 public class MethodInterceptorHolder {
     /**
      * 参数名称获取器,用于获取方法参数的名称
@@ -45,12 +52,18 @@ public class MethodInterceptorHolder {
         String[] argNames = nameDiscoverer.getParameterNames(invocation.getMethod());
         Object[] args = invocation.getArguments();
         Map<String, Object> argMap = new LinkedHashMap<>();
+        String[] names = new String[args.length];
         for (int i = 0, len = args.length; i < len; i++) {
-            argMap.put((argNames == null || argNames[i] == null) ? "arg" + i : argNames[i], args[i]);
+            names[i] = (argNames == null || argNames.length <= i || argNames[i] == null) ? "arg" + i : argNames[i];
+            argMap.put(names[i], args[i]);
         }
+
         return new MethodInterceptorHolder(id,
                 invocation.getMethod(),
-                invocation.getThis(), argMap);
+                invocation.getThis(),
+                args,
+                names,
+                argMap);
     }
 
     private String id;
@@ -59,34 +72,12 @@ public class MethodInterceptorHolder {
 
     private Object target;
 
-    private Map<String, Object> args;
+    private Object[] arguments;
 
-    public MethodInterceptorHolder(String id, Method method, Object target, Map<String, Object> args) {
-        Objects.requireNonNull(id);
-        Objects.requireNonNull(method);
-        Objects.requireNonNull(target);
-        Objects.requireNonNull(args);
-        this.id = id;
-        this.method = method;
-        this.target = target;
-        this.args = args;
-    }
+    private String[] argumentsNames;
 
-    public String getId() {
-        return id;
-    }
+    private Map<String, Object> namedArguments;
 
-    public Method getMethod() {
-        return method;
-    }
-
-    public Object getTarget() {
-        return target;
-    }
-
-    public Map<String, Object> getArgs() {
-        return args;
-    }
 
     public <T extends Annotation> T findMethodAnnotation(Class<T> annClass) {
         return AnnotationUtils.findMethodAnnotation(annClass, method, annClass);
@@ -107,6 +98,30 @@ public class MethodInterceptorHolder {
     public MethodInterceptorContext createParamContext(Object invokeResult) {
         return new MethodInterceptorContext() {
             private static final long serialVersionUID = -4102787561601219273L;
+            private Object result = invokeResult;
+
+            @Override
+            public Object[] getArguments() {
+                return arguments;
+            }
+
+            public boolean handleReactiveArguments(Function<Publisher<?>, Publisher<?>> handler) {
+                boolean handled = false;
+                Object[] args = getArguments();
+                if (args == null || args.length == 0) {
+                    return false;
+                }
+                for (int i = 0; i < args.length; i++) {
+                    Object arg = args[i];
+                    if (arg instanceof Publisher) {
+                        args[i] = handler.apply(((Mono) arg));
+                        handled = true;
+                    }
+                }
+
+                return handled;
+            }
+
 
             @Override
             public Object getTarget() {
@@ -119,11 +134,11 @@ public class MethodInterceptorHolder {
             }
 
             @Override
-            public <T> Optional<T> getParameter(String name) {
-                if (args == null) {
+            public <T> Optional<T> getArgument(String name) {
+                if (namedArguments == null) {
                     return Optional.empty();
                 }
-                return Optional.ofNullable((T) args.get(name));
+                return Optional.ofNullable((T) namedArguments.get(name));
             }
 
             @Override
@@ -132,13 +147,18 @@ public class MethodInterceptorHolder {
             }
 
             @Override
-            public Map<String, Object> getParams() {
-                return getArgs();
+            public Map<String, Object> getNamedArguments() {
+                return MethodInterceptorHolder.this.getNamedArguments();
             }
 
             @Override
             public Object getInvokeResult() {
-                return invokeResult;
+                return result;
+            }
+
+            @Override
+            public void setInvokeResult(Object result) {
+                this.result = result;
             }
         };
     }
