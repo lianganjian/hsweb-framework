@@ -439,7 +439,7 @@
             <snapshots>
                 <enabled>true</enabled>
                 <updatePolicy>
-                    always
+                    never
                 </updatePolicy>
             </snapshots>
         </repository>
