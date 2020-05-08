@@ -122,6 +122,7 @@ public class SimpleDepartmentService
     }
 
     @Override
+    @CacheEvict(allEntries = true)
     public DepartmentEntity deleteByPk(String id) {
         if (DefaultDSLQueryService.createQuery(positionDao)
                 .where(PositionEntity.departmentId, id)
@@ -133,12 +134,14 @@ public class SimpleDepartmentService
     }
 
     @Override
+    @CacheEvict(allEntries = true)
     public String insert(DepartmentEntity entity) {
         publisher.publishEvent(new ClearPersonCacheEvent());
         return super.insert(entity);
     }
 
     @Override
+    @CacheEvict(allEntries = true)
     public int updateByPk(String id, DepartmentEntity entity) {
         publisher.publishEvent(new ClearPersonCacheEvent());
         return super.updateByPk(id, entity);
