@@ -415,7 +415,7 @@ public class SimpleAuthorizationSettingService extends GenericEntityService<Auth
                 .id(userId)
                 .username(userEntity.getUsername())
                 .name(userEntity.getName())
-                .type("default")
+                .type(userEntity.getUserType()==0?"admin":"user")
                 .build());
         //角色
         authentication.setRoles(userService.getUserRole(userId)

@@ -34,6 +34,15 @@ var versions = [
                 .addColumn().name("permission").varchar(32).comment("用户可操作权限").commit()
                 .commit();
         }
+    },
+    {
+        version: "3.0.12",
+        upgrade: function (context) {
+            var database = context.database;
+            database.createOrAlter("s_user")
+                .addOrAlterColumn("user_type").alias("userType").number(4).comment("用户类型").commit()
+                .commit();
+        }
     }
 ];
 var JDBCType = java.sql.JDBCType;

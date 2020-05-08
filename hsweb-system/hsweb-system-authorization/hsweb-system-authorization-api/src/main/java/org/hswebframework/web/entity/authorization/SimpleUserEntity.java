@@ -31,6 +31,8 @@ public class SimpleUserEntity extends SimpleGenericEntity<String> implements Use
 
     private Byte status;
 
+    private Byte userType = 1;
+
     @Override
     public SimpleUserEntity clone() {
         return ((SimpleUserEntity) super.clone());

@@ -33,7 +33,7 @@ public interface UserEntity extends GenericEntity<String>, RecordCreationEntity 
     @SuppressWarnings("all")
     String password = "password";
     String status = "status";
-
+    Byte userType = 1;
     void setName(String name);
 
     /**
@@ -61,6 +61,10 @@ public interface UserEntity extends GenericEntity<String>, RecordCreationEntity 
     Byte getStatus();
 
     void setStatus(Byte status);
+
+    Byte getUserType();
+
+    void setUserType(Byte userType);
 
     @Override
     UserEntity clone();

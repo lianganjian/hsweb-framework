@@ -1,6 +1,7 @@
 package org.hswebframework.web.database.manager.meta.table;
 
 import lombok.Data;
+import org.hswebframework.utils.StringUtils;
 
 import java.io.Serializable;
 import java.sql.JDBCType;
@@ -17,6 +18,11 @@ public class ColumnMetadata implements Serializable {
      * 列名
      */
     private String name;
+
+    /**
+     * 别名
+     */
+    private String alias;
 
     /**
      * 备注
@@ -53,4 +59,7 @@ public class ColumnMetadata implements Serializable {
      */
     private JDBCType jdbcType;
 
+    public String getAlias(){
+        return StringUtils.underScoreCase2CamelCase(name);
+    }
 }
